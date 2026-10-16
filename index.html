@@ -2,1891 +2,627 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Jurnal Guru Harian — Kurikulum Merdeka</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Administrasi Surat Menyurat</title>
+
+<!-- ==================== CDN LIBRARIES ==================== -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
+
+<!-- ==================== STYLE KHUSUS DOKUMEN SURAT ==================== -->
+<!-- Style di dalam tag ini DIIKUTSERTAKAN saat export ke Word -->
+<style id="docStyles">
+  .doc { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000000; }
+  .doc-kop { width: 100%; border-collapse: collapse; border-bottom: 4px double #000000; }
+  .doc-kop td { vertical-align: middle; padding-bottom: 8px; }
+  .doc-logo {
+    width: 62px; height: 62px; border: 2px solid #000000; border-radius: 50%;
+    text-align: center; font-family: Arial, Helvetica, sans-serif; font-weight: bold;
+    font-size: 18pt; line-height: 58px; margin: 0 auto; letter-spacing: 0;
+    overflow: hidden;
+  }
+  .doc-logo img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+  .doc-kop-text { text-align: center; }
+  .doc-yayasan { font-size: 11pt; letter-spacing: 2px; margin: 0; }
+  .doc-sekolah { font-size: 22pt; font-weight: bold; letter-spacing: 1px; line-height: 1.1; margin: 2px 0; }
+  .doc-alamat { font-size: 9pt; margin: 0; }
+  .doc-date { text-align: right; margin-top: 16px; }
+  .doc-meta { border-collapse: collapse; margin-top: 4px; }
+  .doc-meta td { vertical-align: top; padding: 1px 0; }
+  .doc-meta-l { width: 72px; }
+  .doc-meta-c { width: 14px; }
+  .doc-tujuan { margin-top: 18px; }
+  .doc-tujuan-nama { font-weight: bold; }
+  .doc-isi { margin-top: 18px; text-align: justify; min-height: 160px; }
+  .doc-ttd { width: 100%; border-collapse: collapse; margin-top: 36px; }
+  .doc-ttd td { width: 50%; vertical-align: top; text-align: center; font-size: 12pt; }
+  .doc-ttd p { margin: 0; }
+  .doc-nama { font-weight: bold; text-decoration: underline; }
+  .doc-space { height: 62px; }
+</style>
+
+<!-- ==================== STYLE UMUM APLIKASI ==================== -->
 <style>
-  :root{
-    --primary:#0f4c81;
-    --primary-dark:#0b3a63;
-    --primary-light:#e8f1f8;
-    --primary-soft:#d4e6f5;
-    --accent:#0d9488;
-    --accent-dark:#0f766e;
-    --accent-light:#ccfbf1;
-    --danger:#dc2626;
-    --danger-light:#fee2e2;
-    --warning:#f59e0b;
-    --border:#c9d6e2;
-    --border-soft:#e2e8f0;
-    --text:#1f2937;
-    --muted:#64748b;
-    --bg:#eef2f7;
-    --card:#ffffff;
-    --shadow-sm:0 1px 2px rgba(15,76,129,.06);
-    --shadow:0 2px 8px rgba(15,76,129,.08);
-    --shadow-lg:0 8px 24px rgba(15,76,129,.14);
-    --radius:12px;
-    --radius-lg:16px;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    font-family:"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background:var(--bg);
-    background-image:
-      radial-gradient(circle at 20% 0%, rgba(13,148,136,.06), transparent 40%),
-      radial-gradient(circle at 100% 30%, rgba(15,76,129,.06), transparent 40%);
-    background-attachment:fixed;
-    color:var(--text);
-    font-size:14px;
-    line-height:1.55;
-    min-height:100vh;
-  }
-  .app{max-width:1500px;margin:0 auto;padding:22px 18px 40px;}
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
 
-  /* ============ TOPBAR ============ */
-  .topbar{
-    display:flex;align-items:center;justify-content:space-between;gap:16px;
-    background:linear-gradient(135deg,var(--primary) 0%,#12689f 50%,var(--accent) 140%);
-    color:#fff;border-radius:var(--radius-lg);padding:20px 24px;
-    box-shadow:var(--shadow-lg);
-    flex-wrap:wrap;
-    position:relative;overflow:hidden;
-  }
-  .topbar::before{
-    content:"";position:absolute;top:-40%;right:-10%;
-    width:280px;height:280px;border-radius:50%;
-    background:radial-gradient(circle, rgba(255,255,255,.12), transparent 70%);
-    pointer-events:none;
-  }
-  .topbar::after{
-    content:"";position:absolute;bottom:-60%;right:20%;
-    width:200px;height:200px;border-radius:50%;
-    background:radial-gradient(circle, rgba(13,148,136,.25), transparent 70%);
-    pointer-events:none;
-  }
-  .brand{display:flex;align-items:center;gap:14px;position:relative;z-index:1;}
-  .logo{
-    width:50px;height:50px;border-radius:14px;
-    background:linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.08));
-    backdrop-filter:blur(6px);
-    display:grid;place-items:center;
-    font-weight:800;font-size:17px;letter-spacing:.5px;
-    border:1.5px solid rgba(255,255,255,.4);
-    box-shadow:0 4px 12px rgba(0,0,0,.15);
-  }
-  .brand h1{font-size:19px;margin:0;font-weight:700;letter-spacing:.2px;line-height:1.2;}
-  .brand p{margin:3px 0 0;font-size:12px;opacity:.88;letter-spacing:.2px;}
-
-  /* ============ TABS ============ */
-  .tabs{
-    display:inline-flex;gap:4px;
-    background:var(--card);border-radius:14px;padding:6px;
-    margin-top:18px;margin-bottom:4px;
-    border:1px solid var(--border-soft);
-    box-shadow:var(--shadow);
-  }
-  .tab{
-    display:inline-flex;align-items:center;gap:8px;
-    padding:10px 20px;border-radius:10px;
-    background:transparent;border:none;cursor:pointer;
-    font-family:inherit;font-size:13.5px;font-weight:600;
-    color:var(--muted);
-    transition:background .2s, color .2s;
-  }
-  .tab .ico{width:16px;height:16px;display:inline-flex;}
-  .tab .ico svg{width:100%;height:100%;stroke-width:2.2;}
-  .tab:hover{color:var(--text);background:#f1f5f9;}
-  .tab.active{
-    background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
-    color:#fff;
-    box-shadow:0 4px 12px rgba(15,76,129,.28);
-  }
-  .tab.active:hover{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;}
-
-  /* ============ BASE BUTTON ============ */
-  .btn{
-    position:relative;
-    display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    border:none;border-radius:11px;
-    padding:11px 20px;
-    font-size:13.5px;font-weight:600;letter-spacing:.2px;
-    font-family:inherit;
-    cursor:pointer;
-    transition:transform .15s ease, box-shadow .2s ease, background .2s ease, color .2s ease, border-color .2s ease;
-    white-space:nowrap;
-    overflow:hidden;
-    user-select:none;
-  }
-  .btn:active{transform:translateY(1px) scale(.99);}
-  .btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(13,148,136,.35);}
-  .btn .ico{
-    display:inline-flex;align-items:center;justify-content:center;
-    width:16px;height:16px;flex-shrink:0;
-  }
-  .btn .ico svg{width:100%;height:100%;stroke-width:2.2;}
-
-  /* ============ PANEL ============ */
-  .panel{
-    background:var(--card);border-radius:var(--radius-lg);padding:24px;
-    margin-top:18px;border:1px solid var(--border-soft);
-    box-shadow:var(--shadow);
-  }
-  .panel h2{
-    font-size:13.5px;margin:0 0 18px;color:var(--primary);
-    text-transform:uppercase;letter-spacing:1px;font-weight:700;
-    display:flex;align-items:center;gap:10px;
-  }
-  .panel h2::before{
-    content:"";width:5px;height:18px;
-    background:linear-gradient(180deg,var(--accent),var(--primary));
-    border-radius:3px;
-  }
-  .grid{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;
-  }
-  .field{display:flex;flex-direction:column;gap:6px;}
-  .field label{
-    font-size:11.5px;font-weight:700;color:var(--muted);
-    letter-spacing:.5px;text-transform:uppercase;
-  }
-  .field input, .field select, .field textarea{
-    padding:11px 13px;border:1.5px solid var(--border-soft);border-radius:10px;
-    font-size:13.5px;font-family:inherit;color:var(--text);background:#fbfdff;
-    transition:.18s;
-  }
-  .field textarea{resize:vertical;min-height:120px;line-height:1.6;}
-  .field input:hover, .field select:hover, .field textarea:hover{border-color:var(--border);}
-  .field input:focus, .field select:focus, .field textarea:focus{
-    outline:none;border-color:var(--accent);background:#fff;
-    box-shadow:0 0 0 3px rgba(13,148,136,.15);
+  .paper-a4 {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm 25mm;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.25), 0 4px 10px -4px rgba(15, 23, 42, 0.15);
+    box-sizing: border-box;
   }
 
-  /* ============ PANEL ACTIONS ============ */
-  .panel-actions{
-    margin-top:22px;padding-top:20px;
-    border-top:1px dashed var(--border-soft);
-    display:flex;gap:10px;flex-wrap:wrap;align-items:center;
-  }
-  .action-group{
-    display:inline-flex;gap:8px;align-items:center;
-    padding:6px;border-radius:14px;
-    background:#f8fafc;
-    border:1px solid var(--border-soft);
-  }
-  .action-group .lbl-group{
-    font-size:11px;font-weight:700;color:var(--muted);
-    text-transform:uppercase;letter-spacing:.6px;
-    padding:0 8px 0 6px;
-    border-right:1px solid var(--border-soft);
-    margin-right:2px;
+  .thin-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+  .thin-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 8px; }
+  .thin-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+  .thin-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  .page { animation: fadeUp .25s ease-out; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
-  .btn-generate{
-    background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%);
-    color:#fff;
-    padding:12px 24px;font-size:14px;border-radius:12px;
-    box-shadow:0 6px 16px rgba(13,148,136,.32), 0 2px 4px rgba(13,148,136,.2);
-    position:relative;
-  }
-  .btn-generate:hover{
-    transform:translateY(-2px);
-    box-shadow:0 10px 24px rgba(13,148,136,.42), 0 4px 8px rgba(13,148,136,.28);
-    background:linear-gradient(135deg,#10a89a 0%,#0d8074 100%);
-  }
-
-  .btn-outline{
-    background:#fff;color:var(--primary);
-    border:1.5px solid var(--primary-soft);
-    box-shadow:0 1px 2px rgba(15,76,129,.06);
-  }
-  .btn-outline:hover{
-    background:var(--primary-light);
-    border-color:var(--primary);
-    color:var(--primary-dark);
-    transform:translateY(-1.5px);
-    box-shadow:0 4px 12px rgba(15,76,129,.16);
-  }
-
-  .btn-pdf{
-    background:linear-gradient(135deg,#dc2626 0%,#991b1b 100%);
-    color:#fff;
-    border:1.5px solid #991b1b;
-    box-shadow:0 4px 12px rgba(220,38,38,.28);
-  }
-  .btn-pdf:hover{
-    transform:translateY(-2px);
-    box-shadow:0 8px 20px rgba(220,38,38,.4);
-    background:linear-gradient(135deg,#e84545 0%,#a82020 100%);
-  }
-
-  .btn-word{
-    background:linear-gradient(135deg,#2b579a 0%,#1e4272 100%);
-    color:#fff;
-    border:1.5px solid #1e4272;
-    box-shadow:0 4px 12px rgba(43,87,154,.28);
-  }
-  .btn-word:hover{
-    transform:translateY(-2px);
-    box-shadow:0 8px 20px rgba(43,87,154,.4);
-    background:linear-gradient(135deg,#2f60a8 0%,#224a7e 100%);
-  }
-
-  .btn-excel{
-    background:linear-gradient(135deg,#107c41 0%,#0b5c2f 100%);
-    color:#fff;
-    border:1.5px solid #0b5c2f;
-    box-shadow:0 4px 12px rgba(16,124,65,.28);
-  }
-  .btn-excel:hover{
-    transform:translateY(-2px);
-    box-shadow:0 8px 20px rgba(16,124,65,.4);
-    background:linear-gradient(135deg,#128a49 0%,#0d6a36 100%);
-  }
-
-  .btn-danger-outline{
-    background:#fff;color:var(--danger);
-    border:1.5px solid var(--danger-light);
-  }
-  .btn-danger-outline:hover{
-    background:var(--danger-light);
-    border-color:var(--danger);
-    transform:translateY(-1.5px);
-    box-shadow:0 4px 12px rgba(220,38,38,.18);
-  }
-
-  .hint{
-    font-size:12px;color:var(--muted);
-    margin-left:auto;
-    display:inline-flex;align-items:center;gap:6px;
-    padding:6px 12px;border-radius:20px;
-    background:#f8fafc;border:1px dashed var(--border-soft);
-  }
-  .hint svg{width:14px;height:14px;flex-shrink:0;color:var(--accent);}
-
-  /* ============ TOAST ============ */
-  .toast{
-    position:fixed;bottom:24px;right:24px;
-    background:#0f766e;color:#fff;
-    padding:14px 20px;border-radius:12px;
-    box-shadow:0 8px 24px rgba(0,0,0,.2);
-    font-size:13.5px;font-weight:600;
-    display:flex;align-items:center;gap:10px;
-    opacity:0;transform:translateY(20px);
-    transition:opacity .3s, transform .3s;
-    z-index:9999;
-    pointer-events:none;
-    max-width:340px;
-  }
-  .toast.show{opacity:1;transform:translateY(0);}
-  .toast.warn{background:#b45309;}
-  .toast.error{background:#b91c1c;}
-  .toast svg{width:18px;height:18px;flex-shrink:0;}
-
-  /* ============ DOKUMEN JURNAL ============ */
-  .doc{
-    background:var(--card);border-radius:var(--radius-lg);
-    margin-top:22px;padding:28px 26px;
-    border:1px solid var(--border-soft);
-    box-shadow:var(--shadow);
-  }
-  .doc-title{text-align:center;margin-bottom:22px;}
-  .doc-title h2{
-    margin:0;font-size:20px;letter-spacing:2px;
-    color:var(--primary);font-weight:800;
-  }
-  .doc-title p{
-    margin:6px 0 0;font-size:12.5px;color:var(--muted);
-    letter-spacing:.8px;text-transform:uppercase;font-weight:600;
-  }
-  .doc-title .line{
-    width:100px;height:4px;
-    background:linear-gradient(90deg,var(--primary),var(--accent));
-    margin:12px auto 0;border-radius:3px;
-  }
-
-  table.ident{
-    width:100%;border-collapse:separate;border-spacing:0;
-    margin-bottom:20px;font-size:13px;
-    border:1px solid var(--border-soft);border-radius:10px;overflow:hidden;
-  }
-  table.ident td{
-    border-bottom:1px solid var(--border-soft);
-    border-right:1px solid var(--border-soft);
-    padding:10px 14px;vertical-align:middle;
-  }
-  table.ident tr:last-child td{border-bottom:none;}
-  table.ident td:last-child{border-right:none;}
-  table.ident td.lbl{
-    background:linear-gradient(180deg,var(--primary-light),#dceaf6);
-    font-weight:700;color:var(--primary-dark);
-    width:150px;white-space:nowrap;
-    font-size:12px;text-transform:uppercase;letter-spacing:.5px;
-  }
-  table.ident td.val{font-weight:600;color:var(--text);}
-
-  .table-wrap{
-    overflow-x:auto;border-radius:12px;
-    border:1px solid var(--border-soft);
-    box-shadow:inset 0 1px 3px rgba(15,76,129,.04);
-  }
-  table.jurnal{
-    width:100%;border-collapse:collapse;min-width:1180px;font-size:12.5px;
-  }
-  table.jurnal thead th{
-    background:linear-gradient(180deg,var(--primary) 0%,var(--primary-dark) 100%);
-    color:#fff;font-weight:700;
-    padding:13px 10px;text-align:center;vertical-align:middle;
-    border-right:1px solid rgba(255,255,255,.15);
-    font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;
-    position:sticky;top:0;z-index:2;
-  }
-  table.jurnal thead th:last-child{border-right:none;}
-  table.jurnal tbody td{
-    border:1px solid var(--border-soft);
-    padding:12px 11px;vertical-align:top;
-    line-height:1.6;background:#fff;
-  }
-  table.jurnal tbody tr:nth-child(even) td{background:#fafcfe;}
-  table.jurnal tbody tr:hover td{background:#f2f8fd;}
-  td.c-no{
-    text-align:center;font-weight:800;color:var(--primary);
-    background:var(--primary-light)!important;width:46px;
-    font-size:14px;
-  }
-  td[contenteditable]{outline:none;transition:background .15s, box-shadow .15s;}
-  td[contenteditable]:hover{background:#fffdf5;}
-  td[contenteditable]:focus{
-    background:#fffbe9!important;
-    box-shadow:inset 0 0 0 2px var(--accent);
-  }
-  td[contenteditable]:empty::before{
-    content:attr(data-ph);color:#a8b6c4;font-style:italic;
-  }
-  td b{color:var(--primary-dark);}
-  td i{color:var(--accent);font-style:normal;font-weight:700;}
-
-  /* ============ TANDA TANGAN ============ */
-  .sign{
-    margin-top:38px;display:flex;justify-content:space-between;
-    gap:30px;font-size:13px;flex-wrap:wrap;
-    padding-top:24px;border-top:1px dashed var(--border-soft);
-  }
-  .sign .box{flex:1;min-width:220px;text-align:center;}
-  .sign .box .role{margin-bottom:70px;color:var(--muted);line-height:1.6;}
-  .sign .box .name{
-    font-weight:700;border-top:1.5px solid #94a3b8;
-    display:inline-block;padding-top:6px;min-width:180px;
-    color:var(--primary-dark);
-  }
-  .sign .name[contenteditable],
-  .sign .role [contenteditable]{
-    outline:none;cursor:text;
-    transition:background .15s, box-shadow .15s, border-color .15s;
-  }
-  .sign .name[contenteditable]{
-    padding:6px 14px 5px;margin-top:-6px;min-height:26px;
-    border-radius:0 0 6px 6px;
-  }
-  .sign .name[contenteditable]:hover{background:rgba(13,148,136,.07);}
-  .sign .name[contenteditable]:focus{
-    background:#fffbe9;border-top-color:var(--accent);
-    box-shadow:inset 0 -2px 0 var(--accent);
-    border-radius:0 0 6px 6px;
-  }
-  .sign .role [contenteditable]{
-    display:inline-block;padding:1px 6px;border-radius:5px;
-    min-width:20px;color:inherit;
-  }
-  .sign .role [contenteditable]:hover{background:rgba(13,148,136,.08);}
-  .sign .role [contenteditable]:focus{background:#fffbe9;box-shadow:0 0 0 2px var(--accent);}
-  .sign .name[contenteditable]:empty::before,
-  .sign .role [contenteditable]:empty::before{
-    content:attr(data-ph);color:#a8b6c4;font-style:italic;
-    font-weight:400;pointer-events:none;
-  }
-
-  /* ============ PRESENSI ============ */
-  .presensi-info{
-    display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px;
-  }
-  .stat-card{
-    flex:1;min-width:140px;
-    background:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%);
-    border:1px solid var(--border-soft);border-radius:12px;
-    padding:14px 16px;
-    display:flex;align-items:center;gap:12px;
-  }
-  .stat-card .stat-ico{
-    width:38px;height:38px;border-radius:10px;
-    display:grid;place-items:center;
-    background:#fff;border:1px solid var(--border-soft);
-  }
-  .stat-card .stat-ico svg{width:20px;height:20px;stroke-width:2.2;}
-  .stat-card .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.5px;}
-  .stat-card .stat-value{font-size:20px;font-weight:800;color:var(--primary-dark);line-height:1.1;}
-  .stat-card.ok .stat-ico{color:#16a34a;background:#dcfce7;border-color:#86efac;}
-  .stat-card.warn .stat-ico{color:#b45309;background:#fef3c7;border-color:#fcd34d;}
-  .stat-card.info .stat-ico{color:#2563eb;background:#dbeafe;border-color:#93c5fd;}
-  .stat-card.danger .stat-ico{color:#dc2626;background:#fee2e2;border-color:#fca5a5;}
-
-  table.presensi{
-    width:100%;border-collapse:separate;border-spacing:0;
-    border:1px solid var(--border-soft);border-radius:12px;overflow:hidden;
-    font-size:13px;
-  }
-  table.presensi thead th{
-    background:linear-gradient(180deg,var(--primary) 0%,var(--primary-dark) 100%);
-    color:#fff;font-weight:700;
-    padding:12px 8px;text-align:center;
-    border-right:1px solid rgba(255,255,255,.15);
-    font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;
-    position:sticky;top:0;z-index:2;
-  }
-  table.presensi thead th:last-child{border-right:none;}
-  table.presensi thead th.th-no{width:44px;}
-  table.presensi thead th.th-nama{text-align:left;min-width:180px;}
-  table.presensi thead th.th-p{width:44px;}
-  table.presensi thead th.th-persen{width:70px;}
-  table.presensi thead th.th-aksi{width:44px;}
-  table.presensi tbody td{
-    padding:10px 8px;border-bottom:1px solid var(--border-soft);
-    border-right:1px dashed var(--border-soft);
-    background:#fff;vertical-align:middle;
-  }
-  table.presensi tbody tr:last-child td{border-bottom:none;}
-  table.presensi tbody td:last-child{border-right:none;}
-  table.presensi tbody tr:nth-child(even) td{background:#fafcfe;}
-  table.presensi tbody tr:hover td{background:#f2f8fd;}
-  table.presensi td.td-no{
-    text-align:center;font-weight:700;color:var(--primary);
-    background:var(--primary-light)!important;
-  }
-  table.presensi td.td-nama{
-    font-weight:600;color:var(--text);
-    text-align:left;padding-left:14px;
-  }
-  table.presensi td.td-persen{
-    text-align:center;font-weight:800;
-  }
-  table.presensi td.td-persen.high{color:#166534;}
-  table.presensi td.td-persen.mid{color:#92400e;}
-  table.presensi td.td-persen.low{color:#991b1b;}
-
-  td.ab{
-    text-align:center;font-weight:800;cursor:pointer;
-    user-select:none;width:44px;
-    font-size:13px;letter-spacing:.3px;
-    transition:background .15s, transform .08s;
-  }
-  td.ab:hover{transform:scale(1.08);z-index:1;position:relative;}
-  td.ab:active{transform:scale(.95);}
-  td.ab.sH{background:#dcfce7;color:#166534;}
-  td.ab.sS{background:#fef3c7;color:#92400e;}
-  td.ab.sI{background:#dbeafe;color:#1e40af;}
-  td.ab.sA{background:#fee2e2;color:#991b1b;}
-
-  .legend{
-    display:flex;gap:14px;flex-wrap:wrap;
-    margin-top:14px;padding:12px 16px;
-    background:#f8fafc;border:1px dashed var(--border-soft);
-    border-radius:10px;font-size:12px;
-  }
-  .legend .lg{
-    display:inline-flex;align-items:center;gap:6px;
-    color:var(--muted);font-weight:600;
-  }
-  .legend .swatch{
-    width:16px;height:16px;border-radius:5px;
-    border:1px solid var(--border);
-    display:inline-block;
-  }
-  .swatch.sH{background:#dcfce7;border-color:#86efac;}
-  .swatch.sS{background:#fef3c7;border-color:#fcd34d;}
-  .swatch.sI{background:#dbeafe;border-color:#93c5fd;}
-  .swatch.sA{background:#fee2e2;border-color:#fca5a5;}
-
-  .del-student{
-    background:transparent;color:var(--muted);
-    border:none;cursor:pointer;
-    width:26px;height:26px;border-radius:6px;
-    display:grid;place-items:center;
-    font-size:16px;line-height:1;
-    transition:background .15s, color .15s;
-  }
-  .del-student:hover{background:#fee2e2;color:#dc2626;}
-
-  .empty-state{
-    text-align:center;padding:32px;color:var(--muted);font-style:italic;
-    background:repeating-linear-gradient(45deg,#fafcfe,#fafcfe 10px,#f5f9fc 10px,#f5f9fc 20px);
-    border-radius:10px;
-  }
-
-  /* ============ TAB PANES ============ */
-  .pane{display:none;}
-  .pane.active{display:block;}
-
-  /* ============ RESPONSIVE ============ */
-  @media (max-width:720px){
-    .topbar{padding:16px;}
-    .brand{justify-content:center;text-align:center;width:100%;}
-    .doc{padding:18px 14px;}
-    .hint{margin-left:0;width:100%;justify-content:center;}
-    .panel-actions{flex-direction:column;align-items:stretch;}
-    .action-group{width:100%;justify-content:center;flex-wrap:wrap;}
-    .action-group .lbl-group{border-right:none;width:100%;text-align:center;padding:4px 0;}
-    .btn-generate,.btn-pdf,.btn-word,.btn-excel{width:100%;}
-    .tabs{width:100%;justify-content:stretch;}
-    .tab{flex:1;justify-content:center;padding:10px 8px;font-size:12.5px;}
-    .stat-card{min-width:calc(50% - 7px);}
-  }
-
-  @media (max-width:480px){
-    .app{padding:14px 10px 30px;}
-    .action-group{gap:6px;padding:5px;}
-    .action-group .btn{padding:9px 12px;font-size:12.5px;}
-    .stat-card{min-width:100%;}
-  }
-
-  /* ============ PRINT ============ */
-  @media print{
-    @page{ size:A4 landscape; margin:10mm 8mm; }
-    body{background:#fff;font-size:10px;}
-    .app{max-width:none;padding:0;}
-    .no-print{display:none!important;}
-    button{display:none!important;}
-    .toast{display:none!important;}
-    .tabs{display:none!important;}
-    .pane:not(.active){display:none;}
-    .doc{
-      box-shadow:none;border:none;border-radius:0;margin:0;padding:0;
-    }
-    .doc-title h2{font-size:14px;}
-    .doc-title p{font-size:9px;}
-    .doc-title .line{display:none;}
-    table.ident{font-size:9.5px;margin-bottom:8px;}
-    table.ident td{padding:4px 7px;}
-    table.ident td.lbl{width:100px;}
-    .table-wrap{overflow:visible;border:none;box-shadow:none;}
-    table.jurnal{min-width:0;font-size:7.6px;table-layout:fixed;}
-    table.jurnal thead th{
-      position:static;padding:6px 4px;font-size:7.6px;
-      background:#e0eaf3!important;color:#000!important;
-      -webkit-print-color-adjust:exact;print-color-adjust:exact;
-    }
-    table.jurnal tbody td{padding:5px 4px;line-height:1.35;}
-    table.jurnal tbody tr:nth-child(even) td{background:#fff;}
-    table.jurnal tbody tr{page-break-inside:avoid;}
-    td.c-no{
-      background:#eef4fa!important;color:#000;
-      -webkit-print-color-adjust:exact;print-color-adjust:exact;
-    }
-    td[contenteditable]:focus{background:transparent!important;box-shadow:none;}
-    td[contenteditable]:empty::before{content:"";}
-    .sign{margin-top:14px;font-size:9px;}
-    .sign .box .role{margin-bottom:38px;}
-    thead{display:table-header-group;}
-    .sign .name[contenteditable]:focus,
-    .sign .role [contenteditable]:focus{
-      background:transparent!important;box-shadow:none!important;
-      border-top-color:#000!important;
-    }
-    .sign .name[contenteditable]:empty::before,
-    .sign .role [contenteditable]:empty::before{
-      content:attr(data-ph);color:#555;
-    }
-    /* Presensi print */
-    .stat-card{background:#fff!important;border:1px solid #999;}
-    .stat-card .stat-ico{background:#f0f0f0!important;border-color:#999!important;color:#000!important;}
-    .legend{border:1px solid #999;background:#fff;}
-    table.presensi{font-size:8pt;}
-    table.presensi thead th{
-      background:#e0eaf3!important;color:#000!important;
-      -webkit-print-color-adjust:exact;print-color-adjust:exact;
-      padding:5px 4px;
-    }
-    table.presensi tbody td{padding:4px 4px;border-color:#999;}
-    td.ab{
-      -webkit-print-color-adjust:exact;print-color-adjust:exact;
-      border:1px solid #999!important;
-    }
-    .del-student{display:none;}
-  }
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  details[open] .chev { transform: rotate(180deg); }
+  .chev { transition: transform .2s ease; }
 </style>
 </head>
-<body>
-<div class="app">
 
-  <!-- ================= TOPBAR ================= -->
-  <header class="topbar no-print">
-    <div class="brand">
-      <div class="logo">JG</div>
-      <div>
-        <h1>Jurnal Guru Harian</h1>
-        <p>Generator Administrasi Pembelajaran · Kurikulum Merdeka</p>
+<body class="bg-slate-100 text-slate-800 antialiased">
+
+<div id="overlay" class="fixed inset-0 bg-slate-900/50 z-30 hidden lg:hidden"></div>
+
+<!-- ==================== SIDEBAR ==================== -->
+<aside id="sidebar"
+  class="fixed inset-y-0 left-0 z-40 w-64 bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 text-white
+         flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+
+  <div class="h-16 flex items-center gap-3 px-5 border-b border-white/10 shrink-0">
+    <div class="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
+      <i class="fa-solid fa-envelope-open-text text-white"></i>
+    </div>
+    <div class="leading-tight">
+      <p class="font-bold text-sm tracking-wide">SIMPEL SURAT</p>
+      <p class="text-[11px] text-blue-200">Administrasi Sekolah</p>
+    </div>
+  </div>
+
+  <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+    <p class="px-3 pt-3 pb-2 text-[10px] font-semibold tracking-widest text-blue-300 uppercase">Menu Utama</p>
+
+    <a href="#" data-page="dashboard" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-blue-100 hover:bg-white/10 transition">
+      <i class="fa-solid fa-gauge-high w-5 text-center"></i><span>Dashboard</span>
+    </a>
+
+    <a href="#" data-page="surat-masuk" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-blue-100 hover:bg-white/10 transition">
+      <i class="fa-solid fa-inbox w-5 text-center"></i><span>Surat Masuk</span>
+    </a>
+
+    <a href="#" data-page="surat-keluar" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-blue-100 hover:bg-white/10 transition">
+      <i class="fa-solid fa-paper-plane w-5 text-center"></i><span>Surat Keluar</span>
+    </a>
+
+    <p class="px-3 pt-5 pb-2 text-[10px] font-semibold tracking-widest text-blue-300 uppercase">Pembuatan Surat</p>
+
+    <a href="#" data-page="buat-surat" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-blue-100 hover:bg-white/10 transition">
+      <i class="fa-solid fa-file-pen w-5 text-center"></i><span>Buat Surat</span>
+    </a>
+  </nav>
+
+  <div class="p-4 border-t border-white/10 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-xs font-bold">MM</div>
+      <div class="leading-tight">
+        <p class="text-xs font-semibold">Muchammad Muarief, S. Pd.</p>
+        <p class="text-[10px] text-blue-200">Operator Sekolah</p>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ==================== AREA UTAMA ==================== -->
+<div class="lg:ml-64 min-h-screen flex flex-col">
+
+  <header class="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-200">
+    <div class="h-16 px-4 sm:px-6 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <button id="btnMenu" class="lg:hidden w-9 h-9 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="min-w-0">
+          <h1 id="pageTitle" class="text-base sm:text-lg font-bold text-slate-800 truncate">Dashboard</h1>
+          <p id="pageSubtitle" class="text-[11px] sm:text-xs text-slate-500 truncate">Ringkasan aktivitas surat menyurat sekolah</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:block text-right leading-tight">
+          <p class="text-xs font-semibold text-slate-700">Muchammad Muarief, S. Pd.</p>
+          <p class="text-[10px] text-slate-400">Administrator</p>
+        </div>
+        <div class="w-9 h-9 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold shadow">MM</div>
       </div>
     </div>
   </header>
 
-  <!-- ================= TABS ================= -->
-  <nav class="tabs no-print" role="tablist">
-    <button class="tab active" data-tab="jurnal" role="tab">
-      <span class="ico">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="9" y1="13" x2="15" y2="13"/>
-          <line x1="9" y1="17" x2="13" y2="17"/>
-        </svg>
-      </span>
-      Jurnal Harian
-    </button>
-    <button class="tab" data-tab="presensi" role="tab">
-      <span class="ico">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
-      </span>
-      Presensi Siswa
-    </button>
-  </nav>
+  <main class="flex-1 p-4 sm:p-6">
 
-  <!-- =====================================================================
-       PANE 1: JURNAL
-       ===================================================================== -->
-  <div class="pane active" id="pane-jurnal">
-
-    <section class="panel no-print">
-      <h2>Identitas &amp; Rencana Pembelajaran</h2>
-      <div class="grid">
-        <div class="field">
-          <label for="inMapel">Mata Pelajaran</label>
-          <input id="inMapel" type="text" placeholder="Contoh: Bahasa Indonesia" value="Bahasa Indonesia">
-        </div>
-        <div class="field">
-          <label for="inKelas">Kelas / Fase</label>
-          <input id="inKelas" type="text" placeholder="Contoh: VII / Fase D" value="VII / Fase D">
-        </div>
-        <div class="field">
-          <label for="inSemester">Semester</label>
-          <select id="inSemester">
-            <option value="Ganjil">Ganjil</option>
-            <option value="Genap">Genap</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="inTahun">Tahun Pelajaran</label>
-          <input id="inTahun" type="text" placeholder="Contoh: 2024/2025" value="2024/2025">
-        </div>
-        <div class="field">
-          <label for="inMateri">Materi / Topik</label>
-          <input id="inMateri" type="text" placeholder="Contoh: Teks Deskripsi" value="Teks Deskripsi">
-        </div>
-        <div class="field">
-          <label for="inJumlah">Jumlah Pertemuan</label>
-          <input id="inJumlah" type="number" min="1" max="12" value="4">
-        </div>
-        <div class="field">
-          <label for="inGuru">Nama Guru Mata Pelajaran</label>
-          <input id="inGuru" type="text" placeholder="Nama lengkap &amp; gelar" value="">
-        </div>
-        <div class="field">
-          <label for="inNip">NIP / NUPTK</label>
-          <input id="inNip" type="text" placeholder="Nomor induk" value="">
-        </div>
-        <div class="field">
-          <label for="inKepsek">Nama Kepala Sekolah</label>
-          <input id="inKepsek" type="text" placeholder="Nama &amp; gelar kepala sekolah" value="">
-        </div>
-        <div class="field">
-          <label for="inKota">Kota / Kabupaten</label>
-          <input id="inKota" type="text" placeholder="Contoh: Jakarta" value="">
-        </div>
-      </div>
-
-      <div class="panel-actions">
-        <button class="btn btn-generate" id="btnGenerate">
-          <span class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3v3m0 12v3M3 12h3m12 0h3"/>
-              <path d="M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/>
-              <circle cx="12" cy="12" r="3.5"/>
-            </svg>
-          </span>
-          Generate Jurnal
-        </button>
-
-        <div class="action-group">
-          <span class="lbl-group">Ekspor</span>
-          <button class="btn btn-pdf" id="btnExportPDF">
-            <span class="ico">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </span>
-            Simpan PDF
-          </button>
-          <button class="btn btn-word" id="btnExportWord">
-            <span class="ico">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </span>
-            Simpan Word
-          </button>
-        </div>
-
-        <div class="action-group">
-          <span class="lbl-group">Kelola</span>
-          <button class="btn btn-outline" id="btnAddRow" title="Tambah satu pertemuan baru">
-            <span class="ico">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </span>
-            Tambah
-          </button>
-          <button class="btn btn-danger-outline" id="btnDelRow" title="Hapus pertemuan terakhir">
-            <span class="ico">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </span>
-            Hapus
-          </button>
-          <button class="btn btn-danger-outline" id="btnReset" title="Kosongkan seluruh jurnal">
-            <span class="ico">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 6h18"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
-                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
-            </span>
-            Kosongkan
-          </button>
-        </div>
-
-        <span class="hint">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          Sel &amp; tanda tangan dapat diklik langsung
-        </span>
-      </div>
-    </section>
-
-    <section class="doc" id="doc">
-      <div class="doc-title">
-        <h2>JURNAL GURU HARIAN</h2>
-        <p>Kurikulum Merdeka · Tahun Pelajaran <span id="ttTahun">2024/2025</span></p>
-        <div class="line"></div>
-      </div>
-
-      <table class="ident">
-        <tr>
-          <td class="lbl">Mata Pelajaran</td><td class="val" id="ttMapel">—</td>
-          <td class="lbl">Kelas / Fase</td><td class="val" id="ttKelas">—</td>
-        </tr>
-        <tr>
-          <td class="lbl">Semester</td><td class="val" id="ttSemester">—</td>
-          <td class="lbl">Tahun Pelajaran</td><td class="val" id="ttTahun2">—</td>
-        </tr>
-        <tr>
-          <td class="lbl">Materi / Topik</td><td class="val" colspan="3" id="ttMateri">—</td>
-        </tr>
-        <tr>
-          <td class="lbl">Nama Guru</td><td class="val" id="ttGuru">—</td>
-          <td class="lbl">NIP / NUPTK</td><td class="val" id="ttNip">—</td>
-        </tr>
-      </table>
-
-      <div class="table-wrap">
-        <table class="jurnal">
-          <colgroup>
-            <col style="width:4.5%">
-            <col style="width:8%">
-            <col style="width:19%">
-            <col style="width:29%">
-            <col style="width:12%">
-            <col style="width:13.5%">
-            <col style="width:14%">
-          </colgroup>
-          <thead>
-            <tr>
-              <th>Pertemuan ke-</th>
-              <th>Hari / Tanggal</th>
-              <th>Tujuan &amp; Materi Pembelajaran</th>
-              <th>Kegiatan Pembelajaran</th>
-              <th>Penilaian</th>
-              <th>Refleksi Guru</th>
-              <th>Catatan Perkembangan Peserta Didik</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-
-      <div class="sign">
-        <div class="box">
-          <div class="role">Mengetahui,<br>Kepala Sekolah</div>
-          <div class="name"
-               contenteditable="true"
-               data-sign="kepsek"
-               data-ph="(nama kepala sekolah)"></div>
-        </div>
-        <div class="box">
-          <div class="role">
-            <span contenteditable="true" data-sign="kota" data-ph="…………………"></span>,
-            <span contenteditable="true" data-sign="tanggal" data-ph="………………………"></span><br>
-            Guru Mata Pelajaran
+    <!-- ===================================================== -->
+    <!-- 1. DASHBOARD                                           -->
+    <!-- ===================================================== -->
+    <section id="page-dashboard" class="page">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-inbox"></i>
           </div>
-          <div class="name"
-               contenteditable="true"
-               data-sign="guru"
-               data-ph="(nama guru mata pelajaran)"></div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- =====================================================================
-       PANE 2: PRESENSI
-       ===================================================================== -->
-  <div class="pane" id="pane-presensi">
-
-    <section class="panel no-print">
-      <h2>Data Presensi Siswa</h2>
-      <div class="grid">
-        <div class="field" style="grid-column:span 2;">
-          <label for="inPresensiNames">Daftar Nama Siswa (satu nama per baris)</label>
-          <textarea id="inPresensiNames" placeholder="Ahmad Fauzi&#10;Siti Nurhaliza&#10;Budi Santoso&#10;Dewi Lestari"></textarea>
-        </div>
-        <div class="field">
-          <label for="inPresensiMeetings">Jumlah Pertemuan</label>
-          <input id="inPresensiMeetings" type="number" min="1" max="30" value="4">
-        </div>
-      </div>
-
-      <div class="panel-actions">
-        <button class="btn btn-generate" id="btnGeneratePresensi">
-          <span class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 11l3 3L22 4"/>
-              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-            </svg>
-          </span>
-          Buat Daftar Presensi
-        </button>
-
-        <div class="action-group">
-          <span class="lbl-group">Ekspor</span>
-          <button class="btn btn-pdf" id="btnPresensiPDF">
-            <span class="ico">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </span>
-            Simpan PDF
-          </button>
-          <button class="btn btn-excel" id="btnPresensiExcel">
-            <span class="ico">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </span>
-            Simpan CSV
-          </button>
-        </div>
-
-        <div class="action-group">
-          <span class="lbl-group">Kelola</span>
-          <button class="btn btn-outline" id="btnResetPresensi" title="Reset semua status ke Hadir">
-            <span class="ico">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                <path d="M3 3v5h5"/>
-              </svg>
-            </span>
-            Reset Status
-          </button>
-        </div>
-
-        <span class="hint">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          Klik kotak kehadiran untuk mengubah status
-        </span>
-      </div>
-    </section>
-
-    <section class="doc" id="docPresensi">
-      <div class="doc-title">
-        <h2>DAFTAR PRESENSI SISWA</h2>
-        <p>Kurikulum Merdeka · Tahun Pelajaran <span id="ttPresensiTahun">2024/2025</span></p>
-        <div class="line"></div>
-      </div>
-
-      <table class="ident">
-        <tr>
-          <td class="lbl">Mata Pelajaran</td><td class="val" id="ttPresensiMapel">—</td>
-          <td class="lbl">Kelas / Fase</td><td class="val" id="ttPresensiKelas">—</td>
-        </tr>
-        <tr>
-          <td class="lbl">Semester</td><td class="val" id="ttPresensiSemester">—</td>
-          <td class="lbl">Guru Mata Pelajaran</td><td class="val" id="ttPresensiGuru">—</td>
-        </tr>
-      </table>
-
-      <div class="presensi-info" id="presensiStats"></div>
-
-      <div id="presensiContainer">
-        <div class="empty-state">
-          Belum ada data presensi. Isi daftar nama siswa di panel atas, lalu klik <b>Buat Daftar Presensi</b>.
-        </div>
-      </div>
-
-      <div class="legend no-print">
-        <span class="lg"><span class="swatch sH"></span>H — Hadir</span>
-        <span class="lg"><span class="swatch sS"></span>S — Sakit</span>
-        <span class="lg"><span class="swatch sI"></span>I — Izin</span>
-        <span class="lg"><span class="swatch sA"></span>A — Alpa</span>
-      </div>
-
-      <div class="sign">
-        <div class="box">
-          <div class="role">Mengetahui,<br>Kepala Sekolah</div>
-          <div class="name"
-               contenteditable="true"
-               data-sign="kepsek-presensi"
-               data-ph="(nama kepala sekolah)"></div>
-        </div>
-        <div class="box">
-          <div class="role">
-            <span contenteditable="true" data-sign="kota-presensi" data-ph="…………………"></span>,
-            <span contenteditable="true" data-sign="tanggal-presensi" data-ph="………………………"></span><br>
-            Guru Mata Pelajaran
+          <div>
+            <p class="text-xs font-medium text-slate-500">Total Surat Masuk</p>
+            <p id="statMasuk" class="text-2xl font-bold text-slate-800">0</p>
           </div>
-          <div class="name"
-               contenteditable="true"
-               data-sign="guru-presensi"
-               data-ph="(nama guru mata pelajaran)"></div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-paper-plane"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500">Total Surat Keluar</p>
+            <p id="statKeluar" class="text-2xl font-bold text-slate-800">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-file-circle-plus"></i>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-slate-500">Surat Dibuat Bulan Ini</p>
+            <p id="statBulan" class="text-2xl font-bold text-slate-800">0</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h2 class="font-semibold text-slate-800 text-sm">
+            <i class="fa-solid fa-clock-rotate-left text-blue-700 mr-2"></i>Aktivitas Terbaru
+          </h2>
+          <span class="text-[11px] text-slate-400">6 aktivitas terakhir</span>
+        </div>
+        <div class="overflow-x-auto thin-scroll">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500">
+              <tr>
+                <th class="px-5 py-3 font-semibold">Jenis</th>
+                <th class="px-5 py-3 font-semibold">Nomor Surat</th>
+                <th class="px-5 py-3 font-semibold">Keterangan</th>
+                <th class="px-5 py-3 font-semibold text-right">Waktu</th>
+              </tr>
+            </thead>
+            <tbody id="bodyAktivitas"></tbody>
+          </table>
         </div>
       </div>
     </section>
-  </div>
 
+    <!-- ===================================================== -->
+    <!-- 2. SURAT MASUK                                         -->
+    <!-- ===================================================== -->
+    <section id="page-surat-masuk" class="page hidden">
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6 mb-6">
+        <h2 class="font-semibold text-slate-800 text-sm mb-4">
+          <i class="fa-solid fa-square-plus text-blue-700 mr-2"></i>Form Input Surat Masuk
+        </h2>
+
+        <form id="formMasuk" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nomor Surat</label>
+            <input id="inNomorMasuk" type="text" required placeholder="001/SMP/2025"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tanggal Diterima</label>
+            <input id="inTglDiterima" type="date" required
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tanggal Surat</label>
+            <input id="inTglSurat" type="date" required
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Pengirim</label>
+            <input id="inPengirim" type="text" required placeholder="Dinas Pendidikan"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+          </div>
+          <div class="md:col-span-2 xl:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Perihal</label>
+            <input id="inPerihal" type="text" required placeholder="Undangan Rapat Koordinasi"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+          </div>
+
+          <div class="md:col-span-2 xl:col-span-3 flex flex-wrap gap-2 pt-1">
+            <button type="submit" id="btnSimpanMasuk"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-800 text-white text-sm font-semibold hover:bg-blue-900 transition shadow-sm">
+              <i class="fa-solid fa-floppy-disk"></i><span>Simpan</span>
+            </button>
+            <button type="button" id="btnBatalMasuk"
+              class="hidden items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition">
+              <i class="fa-solid fa-xmark"></i><span>Batal Edit</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 class="font-semibold text-slate-800 text-sm">
+            <i class="fa-solid fa-table-list text-blue-700 mr-2"></i>Daftar Surat Masuk
+          </h2>
+          <div class="relative w-full sm:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input id="cariMasuk" type="text" placeholder="Cari nomor, pengirim, perihal..."
+              class="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+          </div>
+        </div>
+        <div class="overflow-x-auto thin-scroll">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500">
+              <tr>
+                <th class="px-4 py-3 font-semibold w-10">No</th>
+                <th class="px-4 py-3 font-semibold">Nomor Surat</th>
+                <th class="px-4 py-3 font-semibold">Tgl Diterima</th>
+                <th class="px-4 py-3 font-semibold">Tgl Surat</th>
+                <th class="px-4 py-3 font-semibold">Pengirim</th>
+                <th class="px-4 py-3 font-semibold">Perihal</th>
+                <th class="px-4 py-3 font-semibold text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="bodyMasuk"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- 3. SURAT KELUAR                                        -->
+    <!-- ===================================================== -->
+    <section id="page-surat-keluar" class="page hidden">
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6 mb-6">
+        <h2 class="font-semibold text-slate-800 text-sm mb-4">
+          <i class="fa-solid fa-square-plus text-emerald-600 mr-2"></i>Form Input Surat Keluar
+        </h2>
+
+        <form id="formKeluar" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nomor Surat</label>
+            <input id="inNomorKeluar" type="text" required placeholder="005/SMP/V/2025"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tanggal</label>
+            <input id="inTglKeluar" type="date" required
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tujuan</label>
+            <input id="inTujuan" type="text" required placeholder="Kepala Dinas Pendidikan"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Perihal</label>
+            <input id="inPerihalKeluar" type="text" required placeholder="Permohonan Izin Kegiatan"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
+          </div>
+
+          <div class="md:col-span-2 xl:col-span-4 flex flex-wrap gap-2 pt-1">
+            <button type="submit" id="btnSimpanKeluar"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition shadow-sm">
+              <i class="fa-solid fa-floppy-disk"></i><span>Simpan</span>
+            </button>
+            <button type="button" id="btnBatalKeluar"
+              class="hidden items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition">
+              <i class="fa-solid fa-xmark"></i><span>Batal Edit</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 class="font-semibold text-slate-800 text-sm">
+            <i class="fa-solid fa-table-list text-emerald-600 mr-2"></i>Daftar Surat Keluar
+          </h2>
+          <div class="relative w-full sm:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input id="cariKeluar" type="text" placeholder="Cari nomor, tujuan, perihal..."
+              class="w-full rounded-lg border border-slate-300 pl-9 pr-3 py-2 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
+          </div>
+        </div>
+        <div class="overflow-x-auto thin-scroll">
+          <table class="w-full text-sm text-left">
+            <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500">
+              <tr>
+                <th class="px-4 py-3 font-semibold w-10">No</th>
+                <th class="px-4 py-3 font-semibold">Nomor Surat</th>
+                <th class="px-4 py-3 font-semibold">Tanggal</th>
+                <th class="px-4 py-3 font-semibold">Tujuan</th>
+                <th class="px-4 py-3 font-semibold">Perihal</th>
+                <th class="px-4 py-3 font-semibold text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="bodyKeluar"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- 4. BUAT SURAT (GENERATOR)                              -->
+    <!-- ===================================================== -->
+    <section id="page-buat-surat" class="page hidden">
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+        <!-- ============ KOLOM KIRI : FORM INPUT ============ -->
+        <div class="space-y-4 xl:sticky xl:top-24 h-fit">
+
+          <!-- ===== PANEL PENGATURAN KOP SURAT ===== -->
+          <details class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" open>
+            <summary class="px-5 py-4 flex items-center justify-between hover:bg-slate-50 transition">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <i class="fa-solid fa-building-columns"></i>
+                </div>
+                <div class="text-left">
+                  <p class="font-bold text-slate-800 text-sm">Pengaturan Kop Surat</p>
+                  <p class="text-[11px] text-slate-500">Ubah logo, nama sekolah & alamat</p>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-down text-slate-400 text-xs chev"></i>
+            </summary>
+
+            <div class="px-5 pb-5 pt-1 border-t border-slate-100 space-y-3">
+
+              <!-- ====== LOGO (UPLOAD + TEKS) ====== -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Logo Sekolah</label>
+                <div class="flex gap-3">
+                  <!-- Preview bulat -->
+                  <div id="logoPreviewBox"
+                    class="w-16 h-16 rounded-full border-2 border-slate-300 bg-slate-50 shrink-0
+                           flex items-center justify-center overflow-hidden font-bold text-slate-700 text-lg">
+                    AL
+                  </div>
+
+                  <!-- Kontrol -->
+                  <div class="flex-1 space-y-2 min-w-0">
+                    <input id="kopLogo" type="text" maxlength="4" placeholder="Singkatan teks (mis. AL)"
+                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100">
+                    <div class="flex flex-wrap gap-2">
+                      <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition cursor-pointer">
+                        <i class="fa-solid fa-upload"></i><span>Upload Logo</span>
+                        <input id="kopLogoFile" type="file" accept="image/png,image/jpeg,image/jpg" class="hidden">
+                      </label>
+                      <button type="button" id="btnHapusLogoImg"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition">
+                        <i class="fa-solid fa-image-slash"></i><span>Hapus Gambar</span>
+                      </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400">
+                      Format <b>JPG / JPEG / PNG</b>. Maks 1 MB. Jika gambar ada, teks singkatan diabaikan.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nama Yayasan</label>
+                <input id="kopYayasan" type="text" placeholder="YAYASAN PENDIDIKAN AL"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nama Sekolah</label>
+                <input id="kopSekolah" type="text" placeholder="SMP AL"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Alamat Baris 1</label>
+                <input id="kopAlamat1" type="text" placeholder="Jl. Pendidikan No. 12, Kec. Menteng, Jakarta Pusat 10310"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Alamat Baris 2 (Kontak)</label>
+                <input id="kopAlamat2" type="text" placeholder="Telp. (021) 1234567 | Email: info@smpal.sch.id"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100">
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1.5">Kota Surat</label>
+                  <input id="kopKota" type="text" placeholder="Jakarta"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100">
+                </div>
+                <div class="flex items-end">
+                  <button type="button" id="btnResetKop"
+                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-amber-50 text-amber-700 text-xs font-semibold hover:bg-amber-100 transition">
+                    <i class="fa-solid fa-rotate-left"></i><span>Reset Kop Surat</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- ===== FORMULIR SURAT ===== -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 sm:p-6">
+            <div class="flex items-center gap-3 mb-5">
+              <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </div>
+              <div>
+                <h2 class="font-bold text-slate-800 text-sm">Formulir Surat</h2>
+                <p class="text-[11px] text-slate-500">Isi data, pratinjau ter-update otomatis</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1.5">Nomor Surat</label>
+                  <input id="genNomor" type="text" placeholder="001/SMP-Al/V/2025"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tanggal Surat</label>
+                  <input id="genTanggal" type="date"
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Tujuan / Penerima</label>
+                <input id="genTujuan" type="text" placeholder="Bapak/Ibu Orang Tua/Wali Siswa"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Perihal</label>
+                <input id="genPerihal" type="text" placeholder="Undangan Sosialisasi Program Sekolah"
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Isi Surat Utama</label>
+                <textarea id="genIsi" rows="12" placeholder="Ketik isi surat di sini..."
+                  class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm leading-relaxed outline-none transition resize-y focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></textarea>
+                <p class="text-[11px] text-slate-400 mt-1.5">
+                  <i class="fa-solid fa-circle-info mr-1"></i>Gunakan Enter untuk membuat paragraf baru.
+                </p>
+              </div>
+
+              <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                <button type="button" id="btnPdf"
+                  class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition shadow-sm">
+                  <i class="fa-solid fa-file-pdf"></i><span>Cetak PDF</span>
+                </button>
+                <button type="button" id="btnWord"
+                  class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition shadow-sm">
+                  <i class="fa-solid fa-file-word"></i><span>Unduh Word</span>
+                </button>
+                <button type="button" id="btnResetGen"
+                  class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-slate-100 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition">
+                  <i class="fa-solid fa-rotate-left"></i><span>Reset</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ KOLOM KANAN : LIVE PREVIEW A4 ============ -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <i class="fa-solid fa-eye mr-1.5"></i>Pratinjau Kertas A4
+            </p>
+            <span class="text-[11px] text-slate-400 bg-white border border-slate-200 rounded-full px-3 py-1">210 × 297 mm</span>
+          </div>
+
+          <div class="bg-slate-200/70 rounded-xl p-4 sm:p-6 overflow-x-auto thin-scroll">
+            <div id="paperA4" class="paper-a4 mx-auto">
+              <div class="doc" id="docContent">
+
+                <!-- KOP SURAT (DINAMIS) -->
+                <table class="doc-kop">
+                  <tr>
+                    <td style="width:80px; text-align:center;">
+                      <div class="doc-logo" id="pvLogo">AL</div>
+                    </td>
+                    <td class="doc-kop-text">
+                      <p class="doc-yayasan" id="pvYayasan">YAYASAN PENDIDIKAN AL</p>
+                      <p class="doc-sekolah" id="pvSekolah">SMP AL</p>
+                      <p class="doc-alamat" id="pvAlamat1">Jl. Pendidikan No. 12, Kec. Menteng, Jakarta Pusat 10310</p>
+                      <p class="doc-alamat" id="pvAlamat2">Telp. (021) 1234567 | Email: info@smpal.sch.id</p>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- TANGGAL -->
+                <div class="doc-date"><span id="pvKota">Jakarta</span>, <span id="pvTanggal">—</span></div>
+
+                <!-- META SURAT -->
+                <table class="doc-meta">
+                  <tr>
+                    <td class="doc-meta-l">Nomor</td>
+                    <td class="doc-meta-c">:</td>
+                    <td id="pvNomor">........................................</td>
+                  </tr>
+                  <tr>
+                    <td class="doc-meta-l">Perihal</td>
+                    <td class="doc-meta-c">:</td>
+                    <td id="pvPerihal">........................................</td>
+                  </tr>
+                </table>
+
+                <!-- TUJUAN -->
+                <div class="doc-tujuan">
+                  <p style="margin:0;">Kepada Yth.</p>
+                  <p class="doc-tujuan-nama" id="pvTujuan" style="margin:0;">........................................</p>
+                  <p style="margin:0;">di Tempat</p>
+                </div>
+
+                <!-- ISI SURAT -->
+                <div class="doc-isi" id="pvIsi"></div>
+
+                <!-- TANDA TANGAN -->
+                <table class="doc-ttd">
+                  <tr>
+                    <td>
+                      <p>Mengetahui,</p>
+                      <p>Operator/Pembuat</p>
+                      <div class="doc-space"></div>
+                      <p class="doc-nama">Muchammad Muarief, S. Pd.</p>
+                      <p>NIP. ................................</p>
+                    </td>
+                    <td>
+                      <p>Atas nama Kepala Sekolah,</p>
+                      <p>SMP Al</p>
+                      <div class="doc-space"></div>
+                      <p class="doc-nama">Mrs. Muarief</p>
+                      <p>NIP. ................................</p>
+                    </td>
+                  </tr>
+                </table>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="px-6 py-4 text-center text-[11px] text-slate-400 border-t border-slate-200 bg-white/60">
+    &copy; 2025 Sistem Administrasi Surat Menyurat
+  </footer>
 </div>
 
-<!-- Toast notification -->
-<div class="toast" id="toast">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-    <polyline points="22 4 12 14.01 9 11.01"/>
-  </svg>
-  <span id="toastMsg">Berhasil</span>
-</div>
+<!-- ==================== SCRIPT APLIKASI ==================== -->
+<script src="app.js"></script>
 
-<!-- =========================================================
-     TEMPLATE BOILERPLATE WORD
-     ========================================================= -->
-<script type="text/template" id="wordBoilerplate">
-<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-<head>
-<meta charset='utf-8'>
-<title>Jurnal Guru Harian</title>
-<style>
-  @page Section1 { size: 29.7cm 21.0cm; mso-page-orientation: landscape; margin: 1.0cm 0.8cm 1.0cm 0.8cm; }
-  div.Section1 { page: Section1; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; color: #1f2937; line-height: 1.4; margin: 0; }
-  .doc-title { text-align: center; margin-bottom: 14pt; }
-  .doc-title h2 { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14pt; font-weight: bold; color: #0f4c81; margin: 0 0 4pt; letter-spacing: 2pt; }
-  .doc-title p { font-size: 9pt; color: #64748b; margin: 0; text-transform: uppercase; letter-spacing: 0.5pt; }
-  .doc-title .line { display: none; }
-  table.ident { width: 100%; border-collapse: collapse; margin-bottom: 12pt; font-size: 9.5pt; }
-  table.ident td { border: 1pt solid #333; padding: 4pt 8pt; vertical-align: middle; }
-  table.ident td.lbl { background: #e8f1f8; font-weight: bold; color: #0b3a63; width: 120pt; font-size: 9pt; text-transform: uppercase; }
-  table.ident td.val { font-weight: bold; color: #1f2937; }
-  table.jurnal { width: 100%; border-collapse: collapse; font-size: 8pt; table-layout: fixed; }
-  table.jurnal thead th { background: #0f4c81; color: #ffffff; padding: 6pt 4pt; border: 1pt solid #0b3a63; font-size: 8pt; font-weight: bold; text-align: center; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.3pt; }
-  table.jurnal tbody td { border: 1pt solid #999; padding: 5pt 4pt; vertical-align: top; line-height: 1.35; font-size: 8pt; }
-  table.jurnal tbody td.c-no { text-align: center; font-weight: bold; background: #e8f1f8; color: #0b3a63; }
-  table.jurnal td b { color: #0b3a63; }
-  table.jurnal td i { color: #0d9488; font-style: normal; font-weight: bold; }
-  .table-wrap { border: none; padding: 0; }
-  .sign { margin-top: 24pt; width: 100%; border-top: 1pt dashed #999; padding-top: 14pt; }
-  .sign .box { text-align: center; vertical-align: top; font-size: 10pt; padding: 0 10pt; display: inline-block; width: 45%; }
-  .sign .role { margin-bottom: 50pt; color: #333; }
-  .sign .name { border-top: 1pt solid #333; padding-top: 4pt; font-weight: bold; color: #0b3a63; display: inline-block; min-width: 160pt; }
-  .hint { display: none; }
-  .legend { display: none; }
-</style>
-</head>
-<body>
-<div class="Section1">{{CONTENT}}</div>
-</body>
-</html>
-</script>
-
-<!-- =========================================================
-     SCRIPT UTAMA
-     ========================================================= -->
-<script>
-const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => document.querySelectorAll(sel);
-const fill = (str, m) => str.replace(/\{m\}/g, m);
-
-/* =========================================================
-   TEMPLATE JURNAL
-   ========================================================= */
-const T = {
-  AWAL: {
-    tujuan: `<b>Tujuan Pembelajaran:</b><br>
-      1. Peserta didik dapat menjelaskan konsep dasar {m} dengan bahasa sendiri secara tepat.<br>
-      2. Peserta didik dapat mengidentifikasi ciri/unsur utama {m} melalui kegiatan eksplorasi sumber belajar.<br>
-      3. Peserta didik menunjukkan sikap mandiri dan bergotong royong dalam kerja berpasangan.<br><br>
-      <b>Materi:</b> Pengertian, ciri-ciri, dan ruang lingkup {m}.`,
-    kegiatan: `<b>Pendahuluan (10 menit):</b><br>
-      1) Guru membuka pembelajaran dengan salam, doa, dan presensi.<br>
-      2) Ice breaking dan apersepsi: mengaitkan {m} dengan pengalaman sehari-hari peserta didik melalui pertanyaan pemantik.<br>
-      3) Guru menyampaikan tujuan pembelajaran, alur kegiatan, dan kesepakatan kelas.<br><br>
-      <b>Inti (60 menit):</b><br>
-      • <i>Memahami</i> — Peserta didik menyimak pemaparan singkat dan mengeksplorasi bahan bacaan/video tentang konsep dasar {m}, lalu mencatat informasi penting.<br>
-      • <i>Mengaplikasi</i> — Secara berpasangan peserta didik mengerjakan LKPD 1 untuk mengidentifikasi ciri/unsur {m} pada contoh yang disediakan.<br>
-      • <i>Merefleksi</i> — Perwakilan peserta didik menyampaikan hasil kerja; guru memberikan umpan balik, penguatan konsep, dan mengklarifikasi miskonsepsi.<br><br>
-      <b>Penutup (10 menit):</b><br>
-      1) Peserta didik dibimbing menyimpulkan pembelajaran.<br>
-      2) Kuis singkat 5 soal sebagai cek pemahaman.<br>
-      3) Guru menyampaikan rencana pertemuan berikutnya, menutup dengan doa dan salam.`,
-    penilaian: `Asesmen <b>formatif</b>:<br>
-      1. Observasi sikap (profil pelajar Pancasila: mandiri, bergotong royong).<br>
-      2. Penilaian LKPD 1 dengan rubrik analitik.<br>
-      3. Kuis singkat 5 soal dengan umpan balik langsung.`,
-    refleksi: `Peserta didik cukup antusias saat kegiatan eksplorasi video. Namun sekitar sepertiga kelas masih kesulitan membedakan ciri utama dan ciri pendukung {m}. Pada pertemuan berikutnya perlu ditambahkan contoh pembanding (<i>contrasting examples</i>) dan waktu diskusi kelompok yang lebih terarah.`,
-    catatan: `• Peserta didik A dan B aktif menyampaikan pendapat serta mampu memimpin diskusi pasangan.<br>
-      • Peserta didik C masih pasif dan perlu ditunjuk bergantian; akan didampingi pada pertemuan berikutnya.<br>
-      • Peserta didik D (daya serap tinggi) diberi tugas pengayaan membaca referensi tambahan.`
-  },
-  PEND1: {
-    tujuan: `<b>Tujuan Pembelajaran:</b><br>
-      1. Peserta didik dapat menganalisis struktur/unsur {m} secara tepat.<br>
-      2. Peserta didik dapat menerapkan konsep {m} pada contoh baru dengan benar.<br>
-      3. Peserta didik mengomunikasikan hasil kerja kelompok dengan percaya diri.<br><br>
-      <b>Materi:</b> Struktur, unsur, dan kaidah/karakteristik {m}; latihan terbimbing.`,
-    kegiatan: `<b>Pendahuluan (10 menit):</b><br>
-      1) Salam, doa, dan presensi.<br>
-      2) Mengulas materi pertemuan sebelumnya melalui tanya jawab singkat berkaitan dengan hasil kuis.<br>
-      3) Menyampaikan tujuan pembelajaran dan bentuk asesmen hari ini.<br><br>
-      <b>Inti (60 menit):</b><br>
-      • <i>Memahami</i> — Guru memodelkan cara menganalisis {m} melalui contoh (<i>think aloud</i>).<br>
-      • <i>Mengaplikasi</i> — Peserta didik mengerjakan latihan terbimbing pada LKPD 2 dengan tingkat kesulitan bertahap melalui <i>think-pair-share</i>/jigsaw; guru berkeliling memberikan diferensiasi (bimbingan tambahan bagi yang belum tuntas, tantangan lanjutan bagi yang sudah mahir).<br>
-      • <i>Merefleksi</i> — Presentasi hasil kerja 2–3 kelompok, dilanjutkan umpan balik antarteman dan penguatan guru.<br><br>
-      <b>Penutup (10 menit):</b><br>
-      1) Simpulan bersama.<br>
-      2) Refleksi 3-2-1 (3 hal yang dipelajari, 2 hal menarik, 1 pertanyaan).<br>
-      3) Tugas mandiri singkat dan informasi rencana pertemuan berikutnya; doa dan salam.`,
-    penilaian: `Asesmen <b>formatif</b>:<br>
-      1. Penilaian kinerja diskusi kelompok (rubrik kolaborasi).<br>
-      2. Penilaian LKPD 2 (rubrik analitik).<br>
-      3. Umpan balik antarteman (<i>peer feedback</i>).`,
-    refleksi: `Pembelajaran berjalan sesuai alokasi waktu. Diferensiasi berjalan cukup efektif, meskipun kelompok bawah masih memerlukan contoh tambahan. Pertemuan berikutnya akan dimulai dengan pengulangan singkat (<i>review</i>) 5 menit sebelum masuk materi baru.`,
-    catatan: `• Peserta didik E mampu menjadi tutor sebaya bagi teman sekelompoknya.<br>
-      • Peserta didik F belum menyelesaikan LKPD karena kurang fokus; diberikan waktu tambahan dan pendampingan individual.<br>
-      • Kehadiran 100%; seluruh peserta didik mengumpulkan LKPD tepat waktu.`
-  },
-  PEND2: {
-    tujuan: `<b>Tujuan Pembelajaran:</b><br>
-      1. Peserta didik dapat menerapkan konsep {m} untuk menyelesaikan masalah kontekstual.<br>
-      2. Peserta didik dapat bekerja sama dalam kelompok secara efektif dan bertanggung jawab.<br>
-      3. Peserta didik mampu menyajikan hasil karya/produk sederhana terkait {m}.<br><br>
-      <b>Materi:</b> Penerapan {m} dalam konteks kehidupan sehari-hari; mini proyek/studi kasus.`,
-    kegiatan: `<b>Pendahuluan (10 menit):</b><br>
-      1) Salam, doa, dan presensi.<br>
-      2) Apersepsi melalui penyajian permasalahan kontekstual terkait {m}.<br>
-      3) Penyampaian tujuan, produk yang diharapkan, dan rubrik penilaian proyek.<br><br>
-      <b>Inti (60 menit):</b><br>
-      • <i>Memahami</i> — Peserta didik mengamati studi kasus/permasalahan nyata yang disajikan guru dan berdiskusi menentukan strategi penyelesaian.<br>
-      • <i>Mengaplikasi</i> — Secara berkelompok peserta didik merancang dan mengerjakan mini proyek/produk sederhana yang menerapkan konsep {m} (perencanaan → pengerjaan → penyusunan laporan/poster).<br>
-      • <i>Merefleksi</i> — <i>Gallery walk</i>: kelompok saling memberi komentar konstruktif; guru memberi penguatan dan menilai proses kerja.<br><br>
-      <b>Penutup (10 menit):</b><br>
-      1) Simpulan dan refleksi capaian kelompok.<br>
-      2) Guru mengingatkan bahwa pertemuan berikutnya akan dilaksanakan asesmen sumatif.<br>
-      3) Doa dan salam.`,
-    penilaian: `Asesmen <b>formatif</b>:<br>
-      1. Penilaian proyek/produk (rubrik: perencanaan, proses kerja sama, hasil, penyajian).<br>
-      2. Observasi sikap gotong royong dan tanggung jawab.`,
-    refleksi: `Peserta didik sangat menikmati kegiatan proyek dan hasilnya cukup variatif. Manajemen waktu kelompok masih menjadi kendala sehingga sesi presentasi dipersingkat. Ke depan perlu menetapkan <i>time keeper</i> pada setiap kelompok.`,
-    catatan: `• Kelompok 3 menyelesaikan produk lebih cepat dan membantu kelompok lain (menunjukkan sikap peduli).<br>
-      • Peserta didik G belum berkontribusi maksimal dalam kelompok; akan diberi peran spesifik pada tugas berikutnya.<br>
-      • Karya terbaik dipajang di kelas sebagai bentuk apresiasi.`
-  },
-  PEND3: {
-    tujuan: `<b>Tujuan Pembelajaran:</b><br>
-      1. Peserta didik dapat memperbaiki miskonsepsi pada materi {m}.<br>
-      2. Peserta didik dapat menguatkan pemahaman konsep {m} sesuai kebutuhan belajarnya (remedial/pengayaan).<br>
-      3. Peserta didik menunjukkan sikap jujur dan bertanggung jawab dalam belajar mandiri.<br><br>
-      <b>Materi:</b> Penguatan konsep {m}; latihan variatif dan pembahasan soal HOTS.`,
-    kegiatan: `<b>Pendahuluan (10 menit):</b><br>
-      1) Salam, doa, dan presensi.<br>
-      2) Membahas kesalahan umum berdasarkan hasil pertemuan sebelumnya.<br>
-      3) Menyampaikan tujuan dan skema kegiatan diferensiasi.<br><br>
-      <b>Inti (60 menit):</b><br>
-      • <i>Memahami</i> — Guru memberikan penjelasan ulang pada poin yang masih menjadi miskonsepsi menggunakan media/alat peraga yang berbeda.<br>
-      • <i>Mengaplikasi</i> — Peserta didik bekerja dalam dua lintasan: <b>lintasan remedial</b> mengerjakan latihan terstruktur dengan pendampingan guru; <b>lintasan pengayaan</b> mengerjakan soal HOTS/studi kasus lanjutan dan menyusun strategi penyelesaian.<br>
-      • <i>Merefleksi</i> — Perwakilan kelompok pengayaan berbagi strategi; guru merangkum poin kunci dan memberikan umpan balik individual.<br><br>
-      <b>Penutup (10 menit):</b><br>
-      1) Simpulan bersama.<br>
-      2) Kesepakatan kesiapan asesmen sumatif dan penyampaian kisi-kisi.<br>
-      3) Doa dan salam.`,
-    penilaian: `Asesmen <b>formatif</b>:<br>
-      1. Penilaian latihan tertulis dengan umpan balik tertulis.<br>
-      2. Observasi keaktifan dan kemandirian.<br>
-      3. Penilaian diri (<i>self-assessment</i>) kesiapan menghadapi asesmen sumatif.`,
-    refleksi: `Skema dua lintasan cukup membantu peserta didik yang tertinggal. Namun pengelolaan kelas cukup menantang karena guru harus membagi perhatian. Ke depan akan melibatkan tutor sebaya yang dilatih terlebih dahulu.`,
-    catatan: `• Sebanyak 6 peserta didik pada lintasan remedial menunjukkan peningkatan pemahaman yang signifikan.<br>
-      • Peserta didik H menyelesaikan soal HOTS dengan strategi berbeda dan dijadikan contoh solusi alternatif.<br>
-      • Peserta didik I tidak hadir (sakit); diberikan bahan dan tugas susulan.`
-  },
-  SUMATIF: {
-    tujuan: `<b>Tujuan Pembelajaran:</b><br>
-      1. Peserta didik dapat menunjukkan capaian pembelajaran pada materi {m} melalui asesmen sumatif.<br>
-      2. Peserta didik melakukan refleksi atas proses dan hasil belajarnya.<br>
-      3. Peserta didik menunjukkan sikap jujur dan mandiri dalam mengerjakan asesmen.<br><br>
-      <b>Materi:</b> Seluruh lingkup materi {m} (asesmen sumatif dan tindak lanjut).`,
-    kegiatan: `<b>Pendahuluan (10 menit):</b><br>
-      1) Salam, doa, dan presensi.<br>
-      2) Menjelaskan tata tertib dan teknis pelaksanaan asesmen sumatif.<br>
-      3) Menumbuhkan kejujuran akademik dan menenangkan peserta didik.<br><br>
-      <b>Inti (60 menit):</b><br>
-      • Pelaksanaan asesmen sumatif (tes tertulis/unjuk kerja/produk) secara mandiri dan jujur.<br>
-      • Peserta didik yang telah selesai mengerjakan lembar refleksi diri dan membaca bahan pengayaan.<br>
-      • Guru melakukan pengecekan cepat (<i>quick marking</i>) untuk memperoleh gambaran awal capaian.<br><br>
-      <b>Penutup (10 menit):</b><br>
-      1) Guru menyampaikan tindak lanjut (program remedial/pengayaan).<br>
-      2) Refleksi akhir pembelajaran.<br>
-      3) Informasi materi berikutnya; doa dan salam.`,
-    penilaian: `Asesmen <b>sumatif</b>:<br>
-      1. Tes tertulis (pilihan ganda dan uraian) dan/atau penilaian produk.<br>
-      2. Lembar refleksi diri peserta didik sebagai data pendukung.`,
-    refleksi: `Secara umum hasil awal menunjukkan sebagian besar peserta didik mencapai tujuan pembelajaran. Kendala utama adalah manajemen waktu pada soal uraian. Ke depan perlu dilatih strategi pengelolaan waktu dalam menjawab soal.`,
-    catatan: `• Nilai rata-rata kelas 78; sebanyak 5 peserta didik perlu remedial pada indikator tertentu.<br>
-      • Peserta didik J meraih capaian tertinggi dan diberi tantangan proyek lanjutan.<br>
-      • Hasil asesmen dianalisis untuk menyusun program tindak lanjut pada pertemuan berikutnya.`
-  },
-  TUNGGAL: {
-    tujuan: `<b>Tujuan Pembelajaran:</b><br>
-      1. Peserta didik dapat menjelaskan konsep dasar {m} dan mengidentifikasi ciri/unsur utamanya.<br>
-      2. Peserta didik dapat menerapkan konsep {m} pada contoh sederhana.<br>
-      3. Peserta didik menunjukkan capaian pembelajaran melalui asesmen singkat.<br><br>
-      <b>Materi:</b> Konsep dasar dan penerapan {m}.`,
-    kegiatan: `<b>Pendahuluan (10 menit):</b><br>
-      1) Salam, doa, dan presensi.<br>
-      2) Apersepsi dan penyampaian tujuan pembelajaran.<br><br>
-      <b>Inti (60 menit):</b><br>
-      • <i>Memahami</i> — Eksplorasi bahan bacaan/video tentang konsep dasar {m}; tanya jawab pemantik.<br>
-      • <i>Mengaplikasi</i> — Peserta didik mengerjakan LKPD secara berpasangan untuk menerapkan konsep {m}.<br>
-      • <i>Merefleksi</i> — Pembahasan bersama dan penguatan dari guru.<br><br>
-      <b>Penutup (10 menit):</b><br>
-      1) Simpulan pembelajaran.<br>
-      2) Asesmen singkat (kuis 5 soal).<br>
-      3) Doa dan salam.`,
-    penilaian: `Asesmen <b>formatif</b> (observasi dan LKPD) serta asesmen <b>sumatif</b> singkat berupa kuis tertulis.`,
-    refleksi: `Karena hanya satu pertemuan, materi disampaikan secara padat. Beberapa peserta didik memerlukan waktu tambahan untuk memahami konsep. Perlu diberikan tugas mandiri terstruktur sebagai penguatan.`,
-    catatan: `• Sebagian besar peserta didik mencapai tujuan pembelajaran.<br>
-      • Peserta didik K memerlukan pendampingan tambahan pada indikator penerapan.<br>
-      • Tugas mandiri diberikan sebagai bentuk tindak lanjut.`
-  }
-};
-
-/* =========================================================
-   STATE
-   ========================================================= */
-let state = {
-  identity: {
-    mapel: "Bahasa Indonesia",
-    kelas: "VII / Fase D",
-    semester: "Ganjil",
-    tahun: "2024/2025",
-    materi: "Teks Deskripsi",
-    guru: "",
-    nip: "",
-    kepsek: "",
-    kota: ""
-  },
-  rows: [],
-  sign: { kepsek: "", guru: "", kota: "", tanggal: "" },
-  presensi: {
-    names: [],
-    status: {},       // { "Ahmad": ["H","S","H","H"] }
-    meetings: 4,
-    sign: { kepsek: "", guru: "", kota: "", tanggal: "" }
-  }
-};
-
-const STATUS_ORDER = ["H", "S", "I", "A"];
-const STATUS_LABEL = { H: "Hadir", S: "Sakit", I: "Izin", A: "Alpa" };
-
-/* =========================================================
-   UTIL
-   ========================================================= */
-function pickTemplate(i, n) {
-  if (n === 1) return T.TUNGGAL;
-  if (i === 1) return T.AWAL;
-  if (i === n) return T.SUMATIF;
-  return [T.PEND1, T.PEND2, T.PEND3][(i - 2) % 3];
-}
-
-let toastTimer;
-function showToast(message, type) {
-  type = type || "success";
-  const toast = $("#toast");
-  const msg = $("#toastMsg");
-  msg.textContent = message;
-  toast.className = "toast show" + (type === "warn" ? " warn" : type === "error" ? " error" : "");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 3400);
-}
-
-/* =========================================================
-   TAB SWITCHING
-   ========================================================= */
-$$(".tab").forEach(function (tab) {
-  tab.addEventListener("click", function () {
-    const target = tab.dataset.tab;
-    $$(".tab").forEach(function (t) { t.classList.toggle("active", t === tab); });
-    $$(".pane").forEach(function (p) { p.classList.remove("active"); });
-    if (target === "jurnal") {
-      $("#pane-jurnal").classList.add("active");
-    } else {
-      $("#pane-presensi").classList.add("active");
-    }
-  });
-});
-
-/* =========================================================
-   BUILD JURNAL
-   ========================================================= */
-function buildRows(jumlah) {
-  const m = state.identity.materi || "materi pembelajaran";
-  const rows = [];
-  for (let i = 1; i <= jumlah; i++) {
-    const tpl = pickTemplate(i, jumlah);
-    rows.push({
-      tanggal: "",
-      tujuan: fill(tpl.tujuan, m),
-      kegiatan: fill(tpl.kegiatan, m),
-      penilaian: fill(tpl.penilaian, m),
-      refleksi: fill(tpl.refleksi, m),
-      catatan: fill(tpl.catatan, m)
-    });
-  }
-  return rows;
-}
-
-function renderTable() {
-  const tb = $("#tbody");
-  tb.innerHTML = state.rows.map(function (r, i) {
-    return '<tr>'
-      + '<td class="c-no">' + (i + 1) + '</td>'
-      + '<td contenteditable="true" data-i="' + i + '" data-f="tanggal" data-ph="……/……/20…">' + (r.tanggal || "") + '</td>'
-      + '<td contenteditable="true" data-i="' + i + '" data-f="tujuan">' + (r.tujuan || "") + '</td>'
-      + '<td contenteditable="true" data-i="' + i + '" data-f="kegiatan">' + (r.kegiatan || "") + '</td>'
-      + '<td contenteditable="true" data-i="' + i + '" data-f="penilaian">' + (r.penilaian || "") + '</td>'
-      + '<td contenteditable="true" data-i="' + i + '" data-f="refleksi">' + (r.refleksi || "") + '</td>'
-      + '<td contenteditable="true" data-i="' + i + '" data-f="catatan">' + (r.catatan || "") + '</td>'
-      + '</tr>';
-  }).join("");
-}
-
-function renderIdentity() {
-  const id = state.identity;
-  $("#ttMapel").textContent   = id.mapel || "—";
-  $("#ttKelas").textContent   = id.kelas || "—";
-  $("#ttSemester").textContent= id.semester || "—";
-  $("#ttTahun").textContent   = id.tahun || "—";
-  $("#ttTahun2").textContent  = id.tahun || "—";
-  $("#ttMateri").textContent  = id.materi || "—";
-  $("#ttGuru").textContent    = id.guru || "………………………………";
-  $("#ttNip").textContent     = id.nip || "………………………………";
-
-  $("#ttPresensiMapel").textContent    = id.mapel || "—";
-  $("#ttPresensiKelas").textContent    = id.kelas || "—";
-  $("#ttPresensiSemester").textContent = id.semester || "—";
-  $("#ttPresensiTahun").textContent    = id.tahun || "—";
-  $("#ttPresensiGuru").textContent     = id.guru || "………………………………";
-}
-
-function renderSign() {
-  $$("[data-sign]").forEach(function (el) {
-    const k = el.dataset.sign;
-    if (k.indexOf("presensi") !== -1) {
-      const key = k.replace("-presensi", "");
-      el.textContent = (state.presensi.sign && state.presensi.sign[key]) || "";
-    } else {
-      el.textContent = (state.sign && state.sign[k]) || "";
-    }
-  });
-}
-
-function bindSignInputs() {
-  $$("[data-sign]").forEach(function (el) {
-    if (el._signBound) return;
-    el._signBound = true;
-
-    el.addEventListener("input", function () {
-      const k = el.dataset.sign;
-      const val = el.textContent.trim();
-      const isPresensi = k.indexOf("presensi") !== -1;
-      const key = isPresensi ? k.replace("-presensi", "") : k;
-
-      if (isPresensi) {
-        state.presensi.sign[key] = val;
-      } else {
-        state.sign[k] = val;
-      }
-
-      if (key === "guru") {
-        state.identity.guru = val;
-        const inp = $("#inGuru");
-        if (inp && document.activeElement !== inp) inp.value = val;
-        const tt = $("#ttGuru");
-        if (tt) tt.textContent = val || "………………………………";
-        const ttP = $("#ttPresensiGuru");
-        if (ttP) ttP.textContent = val || "………………………………";
-      }
-      if (key === "kepsek") {
-        state.identity.kepsek = val;
-        const inp = $("#inKepsek");
-        if (inp && document.activeElement !== inp) inp.value = val;
-      }
-      if (key === "kota") {
-        state.identity.kota = val;
-        const inp = $("#inKota");
-        if (inp && document.activeElement !== inp) inp.value = val;
-      }
-      saveState();
-    });
-
-    el.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { e.preventDefault(); el.blur(); }
-    });
-
-    el.addEventListener("paste", function (e) {
-      e.preventDefault();
-      const text = (e.clipboardData || window.clipboardData).getData("text");
-      document.execCommand("insertText", false, text.replace(/[\r\n]+/g, " "));
-    });
-  });
-}
-
-/* =========================================================
-   PRESENSI
-   ========================================================= */
-function renderPresensi() {
-  const container = $("#presensiContainer");
-  const stats = $("#presensiStats");
-  const names = state.presensi.names;
-  const meetings = state.presensi.meetings;
-
-  if (!names || names.length === 0) {
-    container.innerHTML = '<div class="empty-state">'
-      + 'Belum ada data presensi. Isi daftar nama siswa di panel atas, lalu klik <b>Buat Daftar Presensi</b>.'
-      + '</div>';
-    stats.innerHTML = "";
-    return;
-  }
-
-  /* --- Statistik --- */
-  let totalCells = 0, countH = 0, countS = 0, countI = 0, countA = 0;
-  names.forEach(function (nm) {
-    const arr = state.presensi.status[nm] || [];
-    for (let i = 0; i < meetings; i++) {
-      const v = arr[i] || "H";
-      totalCells++;
-      if (v === "H") countH++;
-      else if (v === "S") countS++;
-      else if (v === "I") countI++;
-      else if (v === "A") countA++;
-    }
-  });
-  const pctH = totalCells ? Math.round(countH / totalCells * 100) : 0;
-
-  stats.innerHTML =
-    '<div class="stat-card ok">'
-    + '<div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>'
-    + '<div><div class="stat-label">Hadir</div><div class="stat-value">' + countH + ' <span style="font-size:12px;color:var(--muted);font-weight:600;">(' + pctH + '%)</span></div></div>'
-    + '</div>'
-    + '<div class="stat-card warn">'
-    + '<div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg></div>'
-    + '<div><div class="stat-label">Sakit</div><div class="stat-value">' + countS + '</div></div>'
-    + '</div>'
-    + '<div class="stat-card info">'
-    + '<div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>'
-    + '<div><div class="stat-label">Izin</div><div class="stat-value">' + countI + '</div></div>'
-    + '</div>'
-    + '<div class="stat-card danger">'
-    + '<div class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>'
-    + '<div><div class="stat-label">Alpa</div><div class="stat-value">' + countA + '</div></div>'
-    + '</div>';
-
-  /* --- Header --- */
-  let html = '<div class="table-wrap"><table class="presensi"><thead><tr>';
-  html += '<th class="th-no">No</th>';
-  html += '<th class="th-nama">Nama Siswa</th>';
-  for (let i = 1; i <= meetings; i++) {
-    html += '<th class="th-p">P' + i + '</th>';
-  }
-  html += '<th class="th-persen">Hadir</th>';
-  html += '<th class="th-aksi no-print">×</th>';
-  html += '</tr></thead><tbody>';
-
-  /* --- Body --- */
-  names.forEach(function (nm, idx) {
-    const arr = state.presensi.status[nm] || [];
-    let okCount = 0;
-    let cellsHtml = "";
-    for (let i = 0; i < meetings; i++) {
-      const v = arr[i] || "H";
-      if (v === "H") okCount++;
-      cellsHtml += '<td class="ab s' + v + '" data-name="' + escapeAttr(nm) + '" data-idx="' + i + '">' + v + '</td>';
-    }
-    const pct = meetings ? Math.round(okCount / meetings * 100) : 0;
-    const pctClass = pct >= 80 ? "high" : pct >= 60 ? "mid" : "low";
-
-    html += '<tr>';
-    html += '<td class="td-no">' + (idx + 1) + '</td>';
-    html += '<td class="td-nama">' + escapeHtml(nm) + '</td>';
-    html += cellsHtml;
-    html += '<td class="td-persen ' + pctClass + '">' + pct + '%</td>';
-    html += '<td class="td-aksi no-print" style="text-align:center"><button class="del-student" data-del="' + escapeAttr(nm) + '" title="Hapus siswa">×</button></td>';
-    html += '</tr>';
-  });
-
-  html += '</tbody></table></div>';
-  container.innerHTML = html;
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, function (c) {
-    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
-  });
-}
-function escapeAttr(s) {
-  return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-/* Event delegation untuk klik status presensi */
-$("#presensiContainer").addEventListener("click", function (e) {
-  const delBtn = e.target.closest("[data-del]");
-  if (delBtn) {
-    const nm = delBtn.dataset.del;
-    if (confirm('Hapus "' + nm + '" dari daftar presensi?')) {
-      const idx = state.presensi.names.indexOf(nm);
-      if (idx > -1) state.presensi.names.splice(idx, 1);
-      delete state.presensi.status[nm];
-      /* Update textarea juga */
-      $("#inPresensiNames").value = state.presensi.names.join("\n");
-      renderPresensi();
-      saveState();
-    }
-    return;
-  }
-
-  const td = e.target.closest("td.ab");
-  if (!td) return;
-
-  const nm = td.dataset.name;
-  const idx = Number(td.dataset.idx);
-  const arr = state.presensi.status[nm] = state.presensi.status[nm] || [];
-  const cur = arr[idx] || "H";
-  const nextIdx = (STATUS_ORDER.indexOf(cur) + 1) % STATUS_ORDER.length;
-  arr[idx] = STATUS_ORDER[nextIdx];
-  renderPresensi();
-  saveState();
-});
-
-/* =========================================================
-   SIMPAN / MUAT
-   ========================================================= */
-const KEY = "jurnal-guru-harian-v2";
-
-function saveState() {
-  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
-}
-
-function loadState() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return false;
-    const parsed = JSON.parse(raw);
-    if (parsed && parsed.identity) {
-      state = Object.assign(state, parsed);
-      state.sign = state.sign || { kepsek:"", guru:"", kota:"", tanggal:"" };
-      state.presensi = state.presensi || { names: [], status: {}, meetings: 4, sign: {} };
-      state.presensi.sign = state.presensi.sign || { kepsek:"", guru:"", kota:"", tanggal:"" };
-      if (!Array.isArray(state.presensi.names)) state.presensi.names = [];
-      if (!state.presensi.status) state.presensi.status = {};
-      if (!state.presensi.meetings) state.presensi.meetings = 4;
-      if (!state.identity.kepsek) state.identity.kepsek = "";
-      if (!state.identity.kota)   state.identity.kota = "";
-      return true;
-    }
-  } catch (e) {}
-  return false;
-}
-
-function syncFormFromState() {
-  $("#inMapel").value    = state.identity.mapel;
-  $("#inKelas").value    = state.identity.kelas;
-  $("#inSemester").value = state.identity.semester;
-  $("#inTahun").value    = state.identity.tahun;
-  $("#inMateri").value   = state.identity.materi;
-  $("#inGuru").value     = state.identity.guru;
-  $("#inNip").value      = state.identity.nip;
-  $("#inKepsek").value   = state.identity.kepsek || "";
-  $("#inKota").value     = state.identity.kota || "";
-  $("#inJumlah").value   = state.rows.length || 4;
-
-  $("#inPresensiNames").value = (state.presensi.names || []).join("\n");
-  $("#inPresensiMeetings").value = state.presensi.meetings || 4;
-}
-
-/* =========================================================
-   EVENT: INPUT IDENTITAS (JURNAL)
-   ========================================================= */
-["inMapel:mapel", "inKelas:kelas", "inSemester:semester", "inTahun:tahun",
- "inMateri:materi", "inGuru:guru", "inNip:nip", "inKepsek:kepsek", "inKota:kota"
-].forEach(function (pair) {
-  const parts = pair.split(":");
-  const elId = parts[0], key = parts[1];
-  document.getElementById(elId).addEventListener("input", function (e) {
-    state.identity[key] = e.target.value;
-    renderIdentity();
-    if (key === "guru")   { state.sign.guru   = e.target.value; state.presensi.sign.guru = e.target.value; renderSign(); }
-    if (key === "kepsek") { state.sign.kepsek = e.target.value; state.presensi.sign.kepsek = e.target.value; renderSign(); }
-    if (key === "kota")   { state.sign.kota   = e.target.value; state.presensi.sign.kota = e.target.value; renderSign(); }
-    saveState();
-  });
-});
-
-/* =========================================================
-   EVENT: EDIT SEL TABEL JURNAL
-   ========================================================= */
-$("#tbody").addEventListener("input", function (e) {
-  const td = e.target.closest("td[data-f]");
-  if (!td) return;
-  const i = Number(td.dataset.i);
-  const f = td.dataset.f;
-  if (state.rows[i]) {
-    state.rows[i][f] = td.innerHTML;
-    saveState();
-  }
-});
-
-/* =========================================================
-   EVENT: JURNAL
-   ========================================================= */
-$("#btnGenerate").addEventListener("click", function () {
-  state.identity.mapel    = $("#inMapel").value.trim() || "…………………";
-  state.identity.kelas    = $("#inKelas").value.trim() || "…………………";
-  state.identity.semester = $("#inSemester").value;
-  state.identity.tahun    = $("#inTahun").value.trim() || "…………………";
-  state.identity.materi   = $("#inMateri").value.trim() || "…………………";
-  state.identity.guru     = $("#inGuru").value.trim();
-  state.identity.nip      = $("#inNip").value.trim();
-  state.identity.kepsek   = $("#inKepsek").value.trim();
-  state.identity.kota     = $("#inKota").value.trim();
-
-  state.sign.guru   = state.identity.guru;
-  state.sign.kepsek = state.identity.kepsek;
-  state.sign.kota   = state.identity.kota;
-  state.presensi.sign.guru   = state.identity.guru;
-  state.presensi.sign.kepsek = state.identity.kepsek;
-  state.presensi.sign.kota   = state.identity.kota;
-
-  let jumlah = parseInt($("#inJumlah").value, 10);
-  if (isNaN(jumlah) || jumlah < 1) jumlah = 1;
-  if (jumlah > 12) jumlah = 12;
-  $("#inJumlah").value = jumlah;
-
-  state.rows = buildRows(jumlah);
-  renderIdentity();
-  renderSign();
-  bindSignInputs();
-  renderTable();
-  saveState();
-
-  document.getElementById("doc").scrollIntoView({ behavior: "smooth", block: "start" });
-});
-
-$("#btnAddRow").addEventListener("click", function () {
-  const n = state.rows.length + 1;
-  const m = state.identity.materi || "materi pembelajaran";
-  const tpl = pickTemplate(n, n + 1);
-  state.rows.push({
-    tanggal: "",
-    tujuan: fill(tpl.tujuan, m),
-    kegiatan: fill(tpl.kegiatan, m),
-    penilaian: fill(tpl.penilaian, m),
-    refleksi: fill(tpl.refleksi, m),
-    catatan: fill(tpl.catatan, m)
-  });
-  $("#inJumlah").value = state.rows.length;
-  renderTable();
-  saveState();
-});
-
-$("#btnDelRow").addEventListener("click", function () {
-  if (state.rows.length <= 1) return;
-  state.rows.pop();
-  $("#inJumlah").value = state.rows.length;
-  renderTable();
-  saveState();
-});
-
-/* =========================================================
-   EVENT: PRESENSI
-   ========================================================= */
-$("#btnGeneratePresensi").addEventListener("click", function () {
-  const raw = $("#inPresensiNames").value;
-  const names = raw.split("\n").map(function (x) { return x.trim(); }).filter(Boolean);
-  let meetings = parseInt($("#inPresensiMeetings").value, 10);
-  if (isNaN(meetings) || meetings < 1) meetings = 1;
-  if (meetings > 30) meetings = 30;
-
-  if (names.length === 0) {
-    showToast("Daftar nama siswa masih kosong.", "warn");
-    return;
-  }
-
-  state.presensi.names = names;
-  state.presensi.meetings = meetings;
-
-  /* Inisialisasi status untuk nama baru (default H), pertahankan yang lama */
-  const newStatus = {};
-  names.forEach(function (nm) {
-    const oldArr = state.presensi.status[nm] || [];
-    const arr = [];
-    for (let i = 0; i < meetings; i++) arr.push(oldArr[i] || "H");
-    newStatus[nm] = arr;
-  });
-  state.presensi.status = newStatus;
-
-  /* Isi tanda tangan presensi jika kosong */
-  if (!state.presensi.sign.guru)   state.presensi.sign.guru   = state.identity.guru;
-  if (!state.presensi.sign.kepsek) state.presensi.sign.kepsek = state.identity.kepsek;
-  if (!state.presensi.sign.kota)   state.presensi.sign.kota   = state.identity.kota;
-
-  renderPresensi();
-  renderSign();
-  bindSignInputs();
-  saveState();
-
-  showToast("Daftar presensi berhasil dibuat: " + names.length + " siswa × " + meetings + " pertemuan.");
-  document.getElementById("docPresensi").scrollIntoView({ behavior: "smooth", block: "start" });
-});
-
-$("#btnResetPresensi").addEventListener("click", function () {
-  if (!state.presensi.names.length) {
-    showToast("Belum ada data presensi.", "warn");
-    return;
-  }
-  if (!confirm("Reset semua status kehadiran menjadi Hadir (H)?")) return;
-  state.presensi.names.forEach(function (nm) {
-    state.presensi.status[nm] = new Array(state.presensi.meetings).fill("H");
-  });
-  renderPresensi();
-  saveState();
-  showToast("Semua status direset ke Hadir.", "success");
-});
-
-/* =========================================================
-   EXPORT PDF (generic)
-   ========================================================= */
-function exportPDF(target) {
-  if (target === "jurnal") {
-    if (!state.rows || state.rows.length === 0) {
-      showToast("Silakan generate jurnal terlebih dahulu.", "warn");
-      return;
-    }
-  } else {
-    if (!state.presensi.names.length) {
-      showToast("Silakan buat daftar presensi terlebih dahulu.", "warn");
-      return;
-    }
-  }
-  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  showToast("Dialog cetak dibuka — pilih 'Save as PDF'", "success");
-  setTimeout(function () { window.print(); }, 300);
-}
-
-$("#btnExportPDF").addEventListener("click", function () { exportPDF("jurnal"); });
-$("#btnPresensiPDF").addEventListener("click", function () { exportPDF("presensi"); });
-
-/* =========================================================
-   EXPORT WORD
-   ========================================================= */
-function exportWord() {
-  const docEl = document.getElementById("doc");
-  if (!docEl) return;
-  if (!state.rows || state.rows.length === 0) {
-    showToast("Silakan generate jurnal terlebih dahulu.", "warn");
-    return;
-  }
-
-  const clone = docEl.cloneNode(true);
-  clone.querySelectorAll("[contenteditable]").forEach(function (el) {
-    el.removeAttribute("contenteditable");
-    el.removeAttribute("data-sign");
-    el.removeAttribute("data-i");
-    el.removeAttribute("data-f");
-    el.removeAttribute("data-ph");
-  });
-  clone.querySelectorAll(".sign .name").forEach(function (el) {
-    if (!el.textContent.trim()) el.textContent = "..............................";
-  });
-  clone.querySelectorAll(".sign .role span").forEach(function (el) {
-    if (!el.textContent.trim()) el.textContent = "......................";
-  });
-
-  const innerHTML = clone.innerHTML;
-  const boilerplate = document.getElementById("wordBoilerplate").textContent;
-  const wordHTML = boilerplate.replace("{{CONTENT}}", innerHTML);
-
-  const mapel = (state.identity.mapel || "Jurnal").replace(/[^a-z0-9]/gi, "_");
-  const materi = (state.identity.materi || "").replace(/[^a-z0-9]/gi, "_");
-  const filename = "Jurnal_" + mapel + (materi ? "_" + materi : "") + ".doc";
-
-  const blob = new Blob(['\ufeff', wordHTML], { type: 'application/msword' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(function () { URL.revokeObjectURL(url); }, 200);
-
-  showToast("File Word berhasil diunduh: " + filename, "success");
-}
-$("#btnExportWord").addEventListener("click", exportWord);
-
-/* =========================================================
-   EXPORT PRESENSI CSV
-   ========================================================= */
-$("#btnPresensiExcel").addEventListener("click", function () {
-  if (!state.presensi.names.length) {
-    showToast("Silakan buat daftar presensi terlebih dahulu.", "warn");
-    return;
-  }
-
-  const names = state.presensi.names;
-  const meetings = state.presensi.meetings;
-
-  function csvCell(v) {
-    const s = String(v == null ? "" : v);
-    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
-  }
-
-  const lines = [];
-  lines.push(["DAFTAR PRESENSI SISWA", state.identity.mapel, state.identity.kelas, state.identity.semester].map(csvCell).join(","));
-  lines.push("");
-  const header = ["No", "Nama Siswa"];
-  for (let i = 1; i <= meetings; i++) header.push("P" + i);
-  header.push("Hadir (%)", "Sakit", "Izin", "Alpa");
-  lines.push(header.map(csvCell).join(","));
-
-  names.forEach(function (nm, idx) {
-    const arr = state.presensi.status[nm] || [];
-    let h = 0, s = 0, ii = 0, a = 0;
-    const row = [idx + 1, nm];
-    for (let i = 0; i < meetings; i++) {
-      const v = arr[i] || "H";
-      if (v === "H") h++;
-      else if (v === "S") s++;
-      else if (v === "I") ii++;
-      else if (v === "A") a++;
-      row.push(v);
-    }
-    row.push(Math.round(h / meetings * 100) + "%");
-    row.push(s); row.push(ii); row.push(a);
-    lines.push(row.map(csvCell).join(","));
-  });
-
-  const csv = "\ufeff" + lines.join("\r\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const mapel = (state.identity.mapel || "Presensi").replace(/[^a-z0-9]/gi, "_");
-  const kelas = (state.identity.kelas || "").replace(/[^a-z0-9]/gi, "_");
-  a.href = url;
-  a.download = "Presensi_" + mapel + (kelas ? "_" + kelas : "") + ".csv";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(function () { URL.revokeObjectURL(url); }, 200);
-
-  showToast("File CSV presensi berhasil diunduh.", "success");
-});
-
-/* =========================================================
-   RESET
-   ========================================================= */
-$("#btnReset").addEventListener("click", function () {
-  if (!confirm("Kosongkan seluruh isi jurnal dan identitas?")) return;
-  localStorage.removeItem(KEY);
-  state.identity = {
-    mapel:"", kelas:"", semester:"Ganjil", tahun:"",
-    materi:"", guru:"", nip:"", kepsek:"", kota:""
-  };
-  state.rows = [];
-  state.sign = { kepsek:"", guru:"", kota:"", tanggal:"" };
-  state.presensi = { names: [], status: {}, meetings: 4, sign: { kepsek:"", guru:"", kota:"", tanggal:"" } };
-  syncFormFromState();
-  renderIdentity();
-  renderSign();
-  $("#tbody").innerHTML = '<tr><td colspan="7" class="empty-state">'
-    + 'Belum ada data. Silakan isi form di atas lalu klik <b>Generate Jurnal</b>.'
-    + '</td></tr>';
-  renderPresensi();
-});
-
-/* =========================================================
-   INIT
-   ========================================================= */
-(function init() {
-  bindSignInputs();
-  if (loadState()) {
-    syncFormFromState();
-    renderIdentity();
-    renderSign();
-    renderTable();
-    renderPresensi();
-  } else {
-    renderIdentity();
-    renderSign();
-    state.rows = buildRows(4);
-    renderTable();
-    renderPresensi();
-  }
-  bindSignInputs();
-})();
-</script>
 </body>
 </html>
